@@ -63,14 +63,16 @@ export const EXPANDED_W = 640;
 
 export const ROUNDED_CORNER = 14; // hidden / compact
 export const EXPANDED_CORNER = 22;
+/** Main face above the activity footer; also exposed to CSS by Island. */
+export const FACE_STAGE_H = 128;
 
 /** Invisible hover strip that wakes the island when hidden. */
 export const WAKE_STRIP_W = 240;
 export const WAKE_STRIP_H = 6;
 
 export const VIEW_LAYOUTS: Record<IslandViewName, ViewLayout> = {
-  overview: { height: 160, botX: 68, botY: null, botDiameter: 58, agentMode: "pills" },
-  empty: { height: 160, botX: 70, botY: null, botDiameter: 62, agentMode: "none" },
+  overview: { height: 250, botX: 68, botY: null, botDiameter: 58, agentMode: "pills" },
+  empty: { height: 250, botX: 320, botY: 106, botDiameter: 128, agentMode: "none" },
   approval: { height: 160, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
   question: { height: 160, botX: 62, botY: null, botDiameter: 56, agentMode: "column" },
   error: { height: 160, botX: 62, botY: null, botDiameter: 58, agentMode: "column" },
@@ -144,7 +146,7 @@ export function botPosition(
     case "hidden":
       return { cx: 46, cy: 16, diameter: 6, opacity: 0 };
     case "compact":
-      return { cx: 40, cy: 16, diameter: 20, opacity: 1 };
+      return { cx: COMPACT_W / 2, cy: NOTCH_H / 2, diameter: 20, opacity: 1 };
     case "expanded": {
       const layout = VIEW_LAYOUTS[view];
       if (view === "uploading") {

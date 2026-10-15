@@ -4,7 +4,7 @@
 import { Tracked, Spring, clamp } from "../core/anim";
 import { Bridge, IS_TAURI, onDragDrop } from "../core/bridge";
 import {
-  EXPANDED_CORNER, EXPANDED_W, NOTCH_W, PANEL_H, PANEL_W,
+  EXPANDED_CORNER, EXPANDED_W, FACE_STAGE_H, NOTCH_W, PANEL_H, PANEL_W,
   ROUNDED_CORNER, VIEW_LAYOUTS, botGlowColor, botGlowOpacity, botPosition, chatPromptHeight,
   islandSize,
   QUESTION_PICKER_H,
@@ -13,6 +13,7 @@ import {
 import { Sound } from "../core/sound";
 import { State } from "../core/state";
 import { SPOTIFY_ID, islandDances } from "../core/spotify";
+import { getCompanion } from "../mochi/companion";
 import { BotEngine, hexToRGB } from "../mochi/engine";
 import { Greeting } from "../mochi/greeting";
 import { createMiniBot, pruneMiniBots, syncMiniBotStates, tickMiniBots } from "../mochi/minibots";
@@ -173,6 +174,7 @@ export class Island {
         const task = State.focusTask;
         // Sessions from the Claude desktop app live there, not in a terminal.
         if (task?.id === CLAUDE_DESKTOP_ID) void Bridge.openClaudeDesktop();
+        else if (task?.id === "agent_codex") void Bridge.openCodexThread(task.sessionId ?? null);
         else void Bridge.openSession(task?.sessionId ?? null, task?.sessionCwd ?? null);
       },
       // The ↗ button — same targets as openAgentTarget() on macOS.
@@ -188,6 +190,7 @@ export class Island {
           integration_calcom: "https://app.cal.com/bookings",
         };
         if (task.id === CLAUDE_DESKTOP_ID) void Bridge.openClaudeDesktop();
+        else if (task.id === "agent_codex") void Bridge.openCodexThread(task.sessionId ?? null);
         else if (task.id === "integration_claude" || task.sessionId) {
           void Bridge.openSession(task.sessionId ?? null, task.sessionCwd ?? null);
         } else if (task.id === "integration_n8n") void Bridge.openN8n();
@@ -886,6 +889,12 @@ export class Island {
     const rect = this.islandRect();
     const cx = rect.x + this.botCx.value;
     const cy = rect.y + this.botCy.value;
+    if (this.faceStage) {
+      return Math.abs(x - cx) <= this.width.value * 0.34 && Math.abs(y - cy) <= FACE_STAGE_H / 2;
+    }
+    if (getCompanion() === "morbido" && State.mode !== "expanded") {
+      return Math.abs(x - cx) <= 50 && Math.abs(y - cy) <= 14;
+    }
     const radius = this.botSize.value / 2;
     return (x - cx) ** 2 + (y - cy) ** 2 <= radius * radius;
   }
@@ -1012,8 +1021,15 @@ export class Island {
     }
   };
 
+  private get faceStage(): boolean {
+    return State.mode === "expanded" && getCompanion() === "morbido" &&
+      !!this.views.get(State.view)?.el.classList.contains("face-stage");
+  }
+
   private updateBotTargets() {
-    const p = botPosition(State.mode, State.view, this.height.value, State.uploadProgress);
+    const p = this.faceStage
+      ? { cx: EXPANDED_W / 2, cy: 42 + FACE_STAGE_H / 2, diameter: FACE_STAGE_H, opacity: 1 }
+      : botPosition(State.mode, State.view, this.height.value, State.uploadProgress);
     this.botCx.target = p.cx;
     this.botCy.target = p.cy;
     this.botSize.target = p.diameter / 0.6;
@@ -1025,7 +1041,7 @@ export class Island {
     const visible = p.opacity > 0 && !greetingActive && !this.uploadActive && !away;
     this.botCanvas.style.opacity = visible ? "1" : "0";
 
-    if (State.mode === "expanded" && State.view !== "uploading" && !greetingActive && !this.uploadActive && !away) {
+    if (getCompanion() !== "morbido" && State.mode === "expanded" && State.view !== "uploading" && !greetingActive && !this.uploadActive && !away) {
       const d = p.diameter;
       const color = botGlowColor(State.effectiveState);
       this.botGlow.style.display = "block";
@@ -1041,6 +1057,34 @@ export class Island {
   }
 
   private drawBot(dt: number) {
+    const morbidoCompact = getCompanion() === "morbido" && State.mode !== "expanded";
+    const stage = this.faceStage;
+    this.engine.facePresentation = morbidoCompact ? "compact" : stage ? "stage" : "embedded";
+    if (morbidoCompact || stage) {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const width = Math.max(1, Math.round(this.width.value - (stage ? 20 : 0)));
+      const height = stage ? FACE_STAGE_H : 32;
+      this.canvasPx = -1;
+      if (this.botCanvas.width !== Math.round(width * dpr) || this.botCanvas.height !== Math.round(height * dpr)) {
+        this.botCanvas.width = Math.round(width * dpr);
+        this.botCanvas.height = Math.round(height * dpr);
+      }
+      this.botCanvas.style.width = `${width}px`;
+      this.botCanvas.style.height = `${height}px`;
+      this.botCanvas.style.left = stage ? "10px" : "0px";
+      this.botCanvas.style.top = stage ? "42px" : "0px";
+      const ctx = this.botCanvas.getContext("2d");
+      if (ctx) {
+        this.engine.lookX = this.lookX(); this.engine.lookY = this.lookY();
+        this.engine.setDancing(islandDances({ music: State.spotifyPlaying, state: State.effectiveState,
+          mode: State.mode, view: State.view, focusId: State.focusTask?.id }));
+        this.engine.update(dt);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        this.engine.draw(ctx, width, height);
+      }
+      return;
+    }
     const size = this.botSize.value;
     const w = Math.max(1, Math.round(size));
     const hCss = w + BOT_OVERHANG;
@@ -1135,6 +1179,7 @@ export class Island {
   // ── DOM sync ────────────────────────────────────────────────────────────────
 
   private syncDom() {
+    this.islandEl.style.setProperty("--face-stage-height", `${FACE_STAGE_H}px`);
     const expanded = State.mode === "expanded";
     const greetingActive = expanded && State.view === "greeting";
 

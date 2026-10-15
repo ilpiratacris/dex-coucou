@@ -12,6 +12,7 @@ import type { FileDiff } from "./diff";
 import type { Bindings } from "./shortcuts";
 import { DEFAULT_OUTFIT, type Outfit } from "../mochi/wardrobe";
 import { pillColor } from "./pill-colors";
+import { setCompanion, type Companion } from "../mochi/companion";
 import { Spotify, musicPlaying } from "./spotify";
 
 export type AgentSource = "claudeCode" | "n8n" | "agent";
@@ -106,6 +107,8 @@ export interface Settings {
   absenceInterval: number;
   /** Declared pills next to the main one (at most 4), in the order they were added. */
   activeIntegrations: string[];
+  /** Whether the optional pill panel beside the main card is visible. */
+  showPillsArea: boolean;
   /** The always-on workspace pill: VS Code, Cursor, Codex or Antigravity. */
   mainPill: string;
   /** "primary", "cursor", or `at:<x>,<y>` for one display (logical origin). */
@@ -135,6 +138,7 @@ export interface Settings {
    * Same raw values as the Mac's "mochiOutfit"; read it through parseOutfit.
    */
   mochiOutfit: string;
+  companion?: Companion;
   /**
    * A colour of the user's own for a pill's Mochi, by pill ID ("#RRGGBB").
    * Empty means the catalog's colours; read it through core/pill-colors.ts.
@@ -173,6 +177,7 @@ export const DEFAULT_SETTINGS: Settings = {
   activeIntegrations: [
     "integration_resend", "integration_n8n", "integration_vercel", "integration_github",
   ],
+  showPillsArea: false,
   mainPill: DEFAULT_MAIN_PILL,
   screen: "primary",
   autostart: false,
@@ -181,13 +186,14 @@ export const DEFAULT_SETTINGS: Settings = {
   showPlanInNotch: false,
   planRelayInstalled: false,
   showCodexPlanInNotch: false,
-  chatProvider: "anthropic",
+  chatProvider: "codex_subscription",
   chatModels: {},
   ollamaUrl: "",
   lmstudioUrl: "",
   customUrl: "",
   shortcuts: {},
   mochiOutfit: DEFAULT_OUTFIT,
+  companion: "morbido",
   pillColors: {},
   language: "",
 };
@@ -273,6 +279,7 @@ class AppState {
 
   /** Marks the UI dirty; the island re-renders on the next frame. */
   notify() {
+    setCompanion(this.settings.companion);
     for (const fn of this.listeners) fn();
   }
 

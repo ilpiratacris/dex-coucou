@@ -1,7 +1,6 @@
-// Mochi's wardrobe — the pure logic, port of NotchBuddy/Sources/CoucouKit/MochiWardrobe.swift.
-// What Mochi wears is picked in the wardrobe view (right-click on Mochi, or the
-// tray menu) and stored in the preferences as `mochiOutfit`. The drawing lives
-// in ./outfits.ts.
+// Legacy outfit preference parsing retained for profile compatibility.
+// Morbido has no wardrobe; the original outfit renderer has been removed.
+// Existing keys may still be read by old profiles/controllers, without drawing.
 
 import { N_, labels, t } from "../i18n/i18n";
 

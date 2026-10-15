@@ -407,6 +407,72 @@ body {
   flex: 1 1 auto;
 }
 
+.overview.pills-area-hidden > .left {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.overview.pills-area-hidden > .right {
+  display: none;
+}
+
+/* Morbido fills the main surface; the task ticker lives in the footer. */
+.overview.face-stage {
+  padding-top: var(--face-stage-height);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.overview.face-stage > .left,
+.overview.face-stage > .right {
+  min-width: 0;
+}
+
+.overview.face-stage .card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.overview.face-stage .card-body {
+  padding-top: 3px;
+}
+
+.overview.face-stage .who {
+  padding: 0 26px;
+  justify-content: center;
+}
+
+.overview.face-stage .who .count {
+  margin-left: 4px;
+}
+
+.overview.face-stage .ticker {
+  margin: 4px 24px 0;
+}
+
+.overview.face-stage .ticker-row {
+  width: fit-content;
+  max-width: 100%;
+  left: 50%;
+  right: auto;
+  translate: -50% 0;
+  transform-origin: center;
+}
+
+.overview.face-stage .tick-text {
+  display: block;
+  text-align: center;
+}
+
+.empty-face .empty-body {
+  padding: var(--face-stage-height) 18px 0;
+  align-items: center;
+  text-align: center;
+}
+
 .card-body {
   position: relative;
   z-index: 1;

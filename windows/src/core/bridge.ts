@@ -223,6 +223,10 @@ export const Bridge = {
   openSession: (sessionId: string | null, path: string | null) =>
     call<boolean>("open_session", { sessionId, path }),
 
+  /** Open the matching conversation in the installed Codex desktop app. */
+  openCodexThread: (sessionId: string | null) =>
+    call<boolean>("open_codex_thread", { sessionId }),
+
   /** The Claude desktop app, for the Claude Desktop pill (Windows only). */
   openClaudeDesktop: () => call<boolean>("open_claude_desktop"),
 

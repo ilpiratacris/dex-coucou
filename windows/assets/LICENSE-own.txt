@@ -1,0 +1,16 @@
+Goo / Morbido - original visual and sound assets
+Copyright (c) 2026 Cristiano Costa. All rights reserved.
+
+Applies to the original Morbido face artwork, Goo app and tray icon artwork,
+and the procedural WAV sound bank authored for this fork. These assets are
+separate from the MIT-licensed application code and are not licensed by the
+upstream LICENSE-ASSETS.md. No upstream sound recordings or character artwork
+are included in this bank.
+
+Sources: src/mochi/morbido.ts, scripts/gen-icons.mjs (drawing routines),
+scripts/gen-sounds.mjs, assets/identity/app-icon.svg, assets/sounds/*.wav.
+The PNG/ICO encoder and other reused utility code retain their original MIT
+notices; see the bundled LICENSE-code.txt and THIRD_PARTY_NOTICES.md.
+
+This notice records the project's chosen asset terms. It is not a trademark
+registration or a legal certification of exclusivity.

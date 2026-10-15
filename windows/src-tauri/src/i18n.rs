@@ -12,10 +12,11 @@ use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::sync::{OnceLock, RwLock};
 
-pub const LANGUAGES: [&str; 10] = ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id"];
+pub const LANGUAGES: [&str; 11] = ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id", "it"];
 
 static MAC: &str = include_str!("../../src/i18n/strings.json");
 static EXTRA: &str = include_str!("../../src/i18n/extra.json");
+static ITALIAN: &str = include_str!("../../src/i18n/italian.json");
 
 type Table = HashMap<String, Map<String, Value>>;
 
@@ -30,6 +31,17 @@ fn table() -> &'static Table {
             for (key, entry) in strings {
                 if let Value::Object(langs) = entry {
                     out.insert(key.clone(), langs.clone());
+                }
+            }
+        }
+        if let Ok(Value::Object(root)) = serde_json::from_str::<Value>(ITALIAN) {
+            if let Some(Value::Object(strings)) = root.get("strings") {
+                for (key, entry) in strings {
+                    if let Some(value) = out.get_mut(key) {
+                        value.insert("it".to_string(), entry.clone());
+                    } else if let Value::Object(langs) = entry {
+                        out.insert(key.clone(), langs.clone());
+                    }
                 }
             }
         }
@@ -134,7 +146,7 @@ thread_local! {
 }
 
 fn interpolate(text: &str, vars: &[(&str, &str)]) -> String {
-    let mut out = text.to_string();
+    let mut out = text.replace("Coucou", "Goo").replace("Mochi", "Morbido");
     for (name, value) in vars {
         out = out.replace(&format!("{{{name}}}"), value);
     }
@@ -254,7 +266,7 @@ mod tests {
         // From the Mac's catalog.
         assert_eq!(t("Allow"), "Autoriser");
         // From extra.json.
-        assert_eq!(t("Open Coucou"), "Ouvrir Coucou");
+        assert_eq!(t("Open Coucou"), "Ouvrir Goo");
         assert_eq!(t("A string nobody translated"), "A string nobody translated");
         assert_eq!(tf("Open {name}", &[("name", "Vercel")]), "Ouvrir Vercel");
         set_for_test("en");
@@ -282,7 +294,7 @@ mod tests {
         let Value::Object(root) = serde_json::from_str::<Value>(EXTRA).unwrap() else { panic!() };
         let Some(Value::Object(strings)) = root.get("strings") else { panic!("no strings") };
         for (key, entry) in strings {
-            for lang in LANGUAGES.iter().filter(|l| **l != "en") {
+            for lang in LANGUAGES.iter().filter(|l| **l != "en" && **l != "it") {
                 assert!(entry.get(*lang).is_some(), "{key:?} has no {lang}");
             }
         }

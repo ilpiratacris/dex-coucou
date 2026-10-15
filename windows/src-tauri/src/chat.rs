@@ -13,7 +13,7 @@ use serde_json::{json, Value};
 use tauri::AppHandle;
 
 use crate::settings::Settings;
-use crate::{claude, local_chat, openai_compat, secrets};
+use crate::{claude, local_chat, openai_compat, secrets, subscription_chat};
 
 pub const ANTHROPIC: &str = "anthropic";
 
@@ -120,8 +120,8 @@ pub fn system_prompt(web_search: bool) -> String {
 
 fn system_prompt_for(first_name: Option<&str>, web_search: bool) -> String {
     let opening = match first_name {
-        Some(name) => format!("You are Mochi, {name}'s personal AI assistant living at the top of their screen."),
-        None => "You are Mochi, a personal AI assistant living at the top of the user's screen.".to_string(),
+        Some(name) => format!("You are Morbido, {name}'s personal AI assistant living at the top of their screen."),
+        None => "You are Morbido, a personal AI assistant living at the top of the user's screen.".to_string(),
     };
     let abilities = if web_search {
         "You have web search access and can help with absolutely anything — research, coding, finding places, recommendations, tasks, questions."
@@ -207,6 +207,9 @@ pub async fn send(
     let context = context.map(checked_context).transpose()?;
     let provider = settings.chat_provider.as_str();
     let model = model_for(settings, provider);
+    if provider == subscription_chat::CODEX || provider == subscription_chat::CLAUDE {
+        return subscription_chat::send(chat, provider, query, context).await;
+    }
     if provider == ANTHROPIC || provider.is_empty() {
         return claude::send(chat, &model, query, context).await;
     }
@@ -230,6 +233,9 @@ pub async fn send_for_phone(
     query: String,
     on_delta: impl FnMut(String),
 ) -> Result<ChatReply, String> {
+    if provider == subscription_chat::CODEX || provider == subscription_chat::CLAUDE {
+        return subscription_chat::send(chat, provider, query, None).await;
+    }
     if provider == ANTHROPIC {
         return claude::send(chat, model, query, None).await;
     }
@@ -246,6 +252,9 @@ pub async fn send_for_phone(
 /// that provider, and only once it has a key (or, for a local server, an
 /// address): nothing is sent anywhere before that.
 pub async fn models(settings: &Settings, provider: &str) -> Result<Vec<ModelInfo>, String> {
+    if provider == subscription_chat::CODEX || provider == subscription_chat::CLAUDE {
+        return Ok(subscription_chat::models(provider));
+    }
     let no_key = || crate::i18n::t("No API key — add it in Settings.");
     if provider == ANTHROPIC {
         let key = secrets::get(claude::KEY).ok_or_else(no_key)?;
@@ -333,11 +342,11 @@ mod tests {
     #[test]
     fn the_prompt_greets_by_first_name_and_claims_web_search_only_for_claude() {
         let p = system_prompt_for(Some("Louis"), true);
-        assert!(p.starts_with("You are Mochi, Louis's personal AI assistant living at the top of their screen."));
+        assert!(p.starts_with("You are Morbido, Louis's personal AI assistant living at the top of their screen."));
         assert!(p.contains("web search access"));
         assert!(p.contains("light Markdown"));
         let p = system_prompt_for(None, false);
-        assert!(p.starts_with("You are Mochi, a personal AI assistant living at the top of the user's screen."));
+        assert!(p.starts_with("You are Morbido, a personal AI assistant living at the top of the user's screen."));
         assert!(!p.contains("web search"));
         assert!(p.contains("no web access"));
     }

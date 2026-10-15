@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><title>Morbido — rappresentazioni dal codice</title>
+<style>
+html,body{overflow:auto!important;height:auto!important}body{margin:0;background:#e7ece5;color:#252d27;font:14px system-ui}
+main{max-width:1050px;margin:auto;padding:32px}h1{font-size:28px;margin:0 0 8px}h2{margin-top:30px;font-size:19px}p{line-height:1.6}
+#root{position:relative!important;width:720px;height:320px;margin:0 auto;background:#d8e3da;border-radius:24px;overflow:hidden}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}figure{margin:0;padding:12px;background:#d9e2d8;border-radius:18px;text-align:center}
+figure canvas{display:block;margin:auto;background:#171b18;border-radius:20px;max-width:100%;height:auto}figcaption{padding-top:10px}
+button,select{font:inherit;border:1px solid #9ead9e;background:#f1f3eb;border-radius:10px;padding:8px;margin:4px;color:#252d27}button{cursor:pointer}
+.wide{grid-column:span 2}.wide canvas{width:100%}#representations{grid-template-columns:repeat(2,1fr)}.small canvas{background:transparent}
+body #island{position:absolute}body #root #island #bot-canvas{pointer-events:none}
+</style></head><body><main>
+<h1>Morbido</h1><p>Anteprima animata dai renderer dell’app Windows. Occhi senza pupille, gradienti opachi, avorio e menta. Muovi il mouse per cambiare lo sguardo.</p>
+<h2>Viste dell’app</h2><div id="controls"></div><div id="root"></div>
+<h2>Gli 11 stati</h2><div class="grid" id="states"></div>
+<h2>Le 7 reazioni</h2><div class="grid" id="emotes"></div>
+<h2>Altre rappresentazioni</h2><div class="grid" id="representations"></div>
+<p>Il notch nascosto si ritrae fuori dallo schermo. Il desktop usa una piccola superficie scura; le miniature mostrano solo gli occhi. Nel caricamento la bocca diventa la fessura che riceve il file.</p>
+</main><script type="module" src="./morbido-preview.js"></script></body></html>

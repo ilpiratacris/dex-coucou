@@ -22,7 +22,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const WINDOWS = join(here, "..");
 const MAC = JSON.parse(readFileSync(join(WINDOWS, "src/i18n/strings.json"), "utf8"));
 const EXTRA = JSON.parse(readFileSync(join(WINDOWS, "src/i18n/extra.json"), "utf8"));
+const ITALIAN = JSON.parse(readFileSync(join(WINDOWS, "src/i18n/italian.json"), "utf8"));
 const OTHERS = LANGUAGE_CODES.filter((l) => l !== "en");
+const CATALOG_LANGUAGES = OTHERS.filter((l) => l !== "it");
 
 /** Runs `fn` in `lang`, then puts English back for the other tests. */
 function inLanguage(lang, fn) {
@@ -44,6 +46,11 @@ test("English is the key itself, other languages come from either table", () => 
     assert.equal(t("Open the chat"), "Ouvrir le chat"); // extra.json
   });
   inLanguage("zh-Hans", () => assert.equal(t("Cancel"), "取消"));
+  inLanguage("it", () => {
+    assert.equal(t("Allow"), "Consenti");
+    assert.equal(t("Open the chat"), "Apri la chat");
+    assert.equal(t("Chat with subscriptions"), "Chatta con gli abbonamenti");
+  });
 });
 
 test("a string nobody translated falls back to its English text", () => {
@@ -116,8 +123,8 @@ test("System follows the system's language when Coucou has it, else English", ()
   assert.equal(resolveLanguage("xx", ["bn-IN"]), "bn");
 });
 
-test("the picker offers the Mac's ten languages, Arabic reads right to left", () => {
-  assert.deepEqual(LANGUAGES.map((l) => l.code), ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id"]);
+test("the picker offers the supported languages, Arabic reads right to left", () => {
+  assert.deepEqual(LANGUAGES.map((l) => l.code), ["en", "zh-Hans", "hi", "es", "ar", "fr", "bn", "pt-BR", "ru", "id", "it"]);
   assert.equal(isRtl("ar"), true);
   assert.equal(OTHERS.some((l) => l !== "ar" && isRtl(l)), false);
 });
@@ -166,7 +173,7 @@ const placeholders = (s) => [...new Set(s.match(/\{\w+\}/g) ?? [])].sort();
 for (const [name, table] of [["strings.json", MAC.strings], ["extra.json", EXTRA.strings]]) {
   test(`${name}: every string in every language, with the key's placeholders`, () => {
     for (const [key, entry] of Object.entries(table)) {
-      for (const lang of OTHERS) {
+      for (const lang of CATALOG_LANGUAGES) {
         const value = entry[lang];
         assert.ok(value !== undefined, `${name}: ${JSON.stringify(key)} has no ${lang}`);
         const forms = typeof value === "string" ? [value] : Object.values(value);
@@ -182,6 +189,11 @@ for (const [name, table] of [["strings.json", MAC.strings], ["extra.json", EXTRA
     }
   });
 }
+
+test("italian.json covers every shared and Windows string", () => {
+  const all = { ...MAC.strings, ...EXTRA.strings };
+  for (const key of Object.keys(all)) assert.ok(ITALIAN.strings[key] !== undefined, key);
+});
 
 test("extra.json never shadows a string of the Mac's", () => {
   for (const key of Object.keys(EXTRA.strings)) assert.ok(!(key in MAC.strings), key);

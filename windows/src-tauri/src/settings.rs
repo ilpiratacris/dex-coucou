@@ -21,6 +21,8 @@ pub struct Settings {
     pub open_on_hover: bool,
     pub absence_interval: f64,
     pub active_integrations: Vec<String>,
+    /// Show the optional pills beside the main card. Hidden by default.
+    pub show_pills_area: bool,
     /// The always-on workspace pill (src/core/pills.ts checks it is one).
     pub main_pill: String,
     /// "primary" = the main display, "cursor" = whichever display the mouse is on.
@@ -57,6 +59,8 @@ pub struct Settings {
     /// season), "none" or an outfit id — the Mac's raw values. The island reads
     /// anything it doesn't know as "auto", so the value is stored as it comes.
     pub mochi_outfit: String,
+    /// Companion preference; the Goo frontend migrates old profiles to Morbido.
+    pub companion: String,
     /// A colour of the user's own for a pill's Mochi, by pill ID ("#RRGGBB"),
     /// picked in Settings → Active pills. Empty means the catalog's colours.
     /// Kept as it comes, like `mochi_outfit`: src/core/pill-colors.ts reads
@@ -134,6 +138,7 @@ impl Default for Settings {
                 "integration_vercel".into(),
                 "integration_github".into(),
             ],
+            show_pills_area: false,
             main_pill: "integration_claude".into(),
             screen: "primary".into(),
             autostart: false,
@@ -142,13 +147,14 @@ impl Default for Settings {
             show_plan_in_notch: false,
             plan_relay_installed: false,
             show_codex_plan_in_notch: false,
-            chat_provider: crate::chat::ANTHROPIC.into(),
+            chat_provider: crate::subscription_chat::CODEX.into(),
             chat_models: BTreeMap::new(),
             ollama_url: String::new(),
             lmstudio_url: String::new(),
             custom_url: String::new(),
             shortcuts: Default::default(),
             mochi_outfit: "auto".into(),
+            companion: "morbido".into(),
             pill_colors: BTreeMap::new(),
             language: String::new(),
             desktop_mochi: DesktopMochiPref::default(),
@@ -421,6 +427,7 @@ mod tests {
   "openOnHover": true,
   "absenceInterval": 60.0,
   "activeIntegrations": ["integration_notion"],
+  "showPillsArea": true,
   "mainPill": "agent_cursor",
   "screen": "cursor",
   "autostart": true,
@@ -436,6 +443,7 @@ mod tests {
   "customUrl": "https://llm.example.com",
   "shortcuts": { "openChat": { "keys": "Ctrl+Shift+K", "enabled": false } },
   "mochiOutfit": "witchHat",
+  "companion": "morbido",
   "pillColors": { "integration_claude": "#2DD4BF" },
   "language": "pt-BR",
   "desktopMochi": { "onDesktop": true, "spot": { "x": 1500.5, "y": -300.0, "space": "screen" } },
@@ -914,6 +922,17 @@ mod tests {
     }
 
     #[test]
+    fn side_panel_starts_hidden_and_keeps_the_users_choice() {
+        let (dir, file) = scratch("side-panel");
+        let mut settings = Settings::default();
+        assert!(!settings.show_pills_area);
+        settings.show_pills_area = true;
+        save_to(&file, &settings).unwrap();
+        assert!(load_from(&file).show_pills_area);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn the_file_holds_the_camel_case_keys_the_front_end_uses() {
         let (dir, file) = scratch("keys");
         save_to(&file, &Settings::default()).unwrap();
@@ -928,6 +947,7 @@ mod tests {
                 "openOnHover",
                 "absenceInterval",
                 "activeIntegrations",
+                "showPillsArea",
                 "mainPill",
                 "screen",
                 "autostart",
@@ -943,6 +963,7 @@ mod tests {
                 "customUrl",
                 "shortcuts",
                 "mochiOutfit",
+                "companion",
                 "pillColors",
                 "language",
                 "desktopMochi",

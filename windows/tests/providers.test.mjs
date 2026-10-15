@@ -11,17 +11,21 @@ import { DEFAULT_SETTINGS } from "../src/core/state.ts";
 const settings = (over = {}) => ({ ...DEFAULT_SETTINGS, ...over });
 
 test("the ids and key names match the Rust side and the Mac", () => {
-  assert.deepEqual(PROVIDERS.map((p) => p.id), ["anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"]);
+  assert.deepEqual(PROVIDERS.map((p) => p.id), ["codex_subscription", "claude_subscription", "anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"]);
+  assert.equal(providerDef("codex_subscription").key, null);
+  assert.equal(providerDef("claude_subscription").key, null);
   assert.equal(providerDef("google").key, "google-api-key");
   assert.equal(providerDef("openai").key, "openai-api-key");
   assert.equal(providerDef("openrouter").key, "openrouter-api-key");
   assert.equal(providerDef("ollama").key, null);
-  // An unknown id (an older or newer settings.json) falls back to Claude.
+  // An empty legacy id must match the Rust backend's Anthropic API fallback.
+  assert.equal(providerDef("").id, "anthropic");
   assert.equal(providerDef("nope").id, "anthropic");
 });
 
-test("Claude's model is the existing setting; the others are kept per provider", () => {
-  assert.equal(activeModel(settings()), "claude-opus-5");
+test("Claude's API model is the existing setting; subscriptions and other providers keep their own model", () => {
+  assert.equal(activeModel(settings()), "account");
+  assert.equal(activeModel(settings({ chatProvider: "anthropic" })), "claude-opus-5");
   assert.equal(activeModel(settings({ chatProvider: "google" })), "gemini-2.0-flash");
   assert.equal(activeModel(settings({ chatProvider: "ollama" })), "");
   let s = withModel(settings({ chatProvider: "openai" }), "openai", "gpt-5-mini");
@@ -36,9 +40,10 @@ test("Claude's model is the existing setting; the others are kept per provider",
 
 test("model servers show in the picker once connected, or while in use", () => {
   const ids = (s) => visibleProviders(s).map((p) => p.id);
-  assert.deepEqual(ids(settings()), ["anthropic", "google", "openai", "openrouter"]);
-  assert.deepEqual(ids(settings({ ollamaUrl: "http://127.0.0.1:11434" })), ["anthropic", "google", "openai", "openrouter", "ollama"]);
-  assert.deepEqual(ids(settings({ chatProvider: "custom" })), ["anthropic", "google", "openai", "openrouter", "custom"]);
+  const base = ["codex_subscription", "claude_subscription", "anthropic", "google", "openai", "openrouter"];
+  assert.deepEqual(ids(settings()), base);
+  assert.deepEqual(ids(settings({ ollamaUrl: "http://127.0.0.1:11434" })), [...base, "ollama"]);
+  assert.deepEqual(ids(settings({ chatProvider: "custom" })), [...base, "custom"]);
 });
 
 test("the saved model is kept when offered, else a sensible one is picked", () => {

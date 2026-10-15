@@ -1,0 +1,14 @@
+{
+  "product": "Goo",
+  "companion": "Morbido",
+  "author": "Cristiano Costa",
+  "created": "2026-10-15",
+  "graphics": "Original procedural vector/canvas drawing, matte charcoal and ivory-mint gradients; no upstream character artwork.",
+  "iconSource": "windows/scripts/gen-icons.mjs",
+  "faceSource": "windows/src/mochi/morbido.ts",
+  "motionSource": ["windows/src/mochi/engine.ts", "windows/src/mochi/greeting.ts"],
+  "soundSource": "windows/scripts/gen-sounds.mjs",
+  "sounds": "29 independently synthesized PCM WAV signals, no recorded samples.",
+  "license": "windows/assets/LICENSE-own.txt",
+  "scope": "Windows fork. Original macOS/Android sources and media in this repository are historical references, excluded from this Windows package."
+}

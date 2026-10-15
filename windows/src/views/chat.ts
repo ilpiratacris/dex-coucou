@@ -242,7 +242,7 @@ export function buildPrompt(onHeightChange: () => void): ViewHost {
   function drawModelButton() {
     const p = providerDef(State.settings.chatProvider);
     modelDot.style.background = p.accent;
-    modelName.textContent = activeModel(State.settings) || t(STRINGS.noModel);
+    modelName.textContent = p.id.endsWith("_subscription") ? t(p.name) : activeModel(State.settings) || t(STRINGS.noModel);
     modelBtn.classList.toggle("open", picker.isOpen);
     modelBtn.disabled = sending;
   }

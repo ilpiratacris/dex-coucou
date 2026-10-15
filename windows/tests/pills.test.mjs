@@ -9,6 +9,13 @@ import {
 } from "../src/core/pills.ts";
 import { DEFAULT_SETTINGS, State } from "../src/core/state.ts";
 
+test("optional pills can be hidden and selected later", () => {
+  const visible = { mainPill: "agent_codex", activeIntegrations: ["integration_n8n"] };
+  const hidden = toggleDeclared(visible, "integration_n8n", "windows");
+  assert.deepEqual(hidden, []);
+  assert.deepEqual(toggleDeclared({ ...visible, activeIntegrations: hidden }, "integration_n8n", "windows"), ["integration_n8n"]);
+});
+
 // ── The catalog itself ────────────────────────────────────────────────────────
 
 test("the catalog holds the Mac's pills, in the Mac's order, with the Mac's values", () => {

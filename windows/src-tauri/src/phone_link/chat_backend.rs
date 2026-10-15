@@ -19,7 +19,7 @@ use crate::{chat, claude, log, openai_compat, secrets, Shared};
 pub const MAX_ALLOWED: usize = 50;
 const MAX_MODEL_CHARS: usize = 200;
 
-const PROVIDERS: [&str; 7] = ["anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"];
+const PROVIDERS: [&str; 9] = ["codex_subscription", "claude_subscription", "anthropic", "google", "openai", "openrouter", "ollama", "lmstudio", "custom"];
 
 pub struct AppChat {
     app: AppHandle,
@@ -90,6 +90,8 @@ fn key_name(provider: &str) -> Option<&'static str> {
 
 pub fn provider_name(provider: &str) -> String {
     match provider {
+        "codex_subscription" => "Codex subscription".into(),
+        "claude_subscription" => "Claude subscription".into(),
         "anthropic" => "Anthropic".into(),
         "google" => "Google".into(),
         "openai" => "OpenAI".into(),
@@ -105,7 +107,8 @@ pub fn provider_name(provider: &str) -> String {
 pub fn parse_model_id(id: &str) -> Option<(&str, &str)> {
     let (provider, model) = id.split_once('/')?;
     let model = model.trim();
-    if !PROVIDERS.contains(&provider) || model.is_empty() || model.chars().count() > MAX_MODEL_CHARS || model.chars().any(char::is_control) {
+    if !PROVIDERS.contains(&provider) || model.is_empty() || model.chars().count() > MAX_MODEL_CHARS || model.chars().any(char::is_control)
+        || matches!(provider, "codex_subscription" | "claude_subscription") && model != "account" {
         return None;
     }
     Some((provider, model))
@@ -164,7 +167,9 @@ mod tests {
         assert_eq!(parse_model_id("openai/gpt-4o"), Some(("openai", "gpt-4o")));
         assert_eq!(parse_model_id("openrouter/openrouter/auto"), Some(("openrouter", "openrouter/auto")));
         assert_eq!(parse_model_id("ollama/llama3.2:latest"), Some(("ollama", "llama3.2:latest")));
-        for bad in ["", "openai", "openai/", "openai/ ", "nope/gpt", "OpenAI/gpt", "openai/a\nb", &format!("openai/{}", "x".repeat(201))] {
+        assert_eq!(parse_model_id("codex_subscription/account"), Some(("codex_subscription", "account")));
+        assert_eq!(parse_model_id("claude_subscription/account"), Some(("claude_subscription", "account")));
+        for bad in ["", "openai", "openai/", "openai/ ", "nope/gpt", "OpenAI/gpt", "openai/a\nb", "codex_subscription/other", &format!("openai/{}", "x".repeat(201))] {
             assert_eq!(parse_model_id(bad), None, "{bad:?}");
         }
     }

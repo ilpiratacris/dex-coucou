@@ -2,21 +2,17 @@ import { defineConfig, type Plugin } from "vite";
 import { existsSync, mkdirSync, readdirSync, copyFileSync, createReadStream } from "node:fs";
 import { resolve, join, extname } from "node:path";
 
-// ───────────────────────────────────────────────────────────────────────────────
-// THE one and only place the shared sound folder is declared.
-// The 29 WAVs live in the macOS app and are NOT duplicated in the repo; when they
-// move to `shared/sounds/`, change this single line.
-export const SOUNDS_DIR = resolve(__dirname, "../NotchBuddy/Resources/sounds");
-// ───────────────────────────────────────────────────────────────────────────────
+// Only our procedurally authored sound bank is served and bundled.
+export const SOUNDS_DIR = resolve(__dirname, "assets/sounds");
 
 /**
  * Serves SOUNDS_DIR at /sounds/*.wav in dev, and copies it into dist/sounds on build.
- * Keeps the WAVs out of windows/ while still shipping them inside the installer.
+ * Includes only the fork sound bank in the installer.
  */
 function sharedSounds(): Plugin {
   const prefix = "/sounds/";
   return {
-    name: "coucou-shared-sounds",
+    name: "companion-original-sounds",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!req.url?.startsWith(prefix)) return next();

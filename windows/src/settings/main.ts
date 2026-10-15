@@ -9,6 +9,7 @@ import {
   ISLAND_SHORTCUTS, SHORTCUTS, SHORTCUT_TEXT, activeKeys, displayKeys, duplicates, effective,
   recordPress, type Binding,
 } from "../core/shortcuts";
+import { PRODUCT_LABEL } from "../core/brand";
 import { DEFAULT_SETTINGS, type Settings } from "../core/state";
 import { SOUND_NAMES } from "../core/sound";
 import {
@@ -46,11 +47,13 @@ function pickColor(next: Record<string, string>) {
 
 // ── Reusable bits ─────────────────────────────────────────────────────────────
 
-function toggle(on: boolean, onChange: (v: boolean) => void): HTMLElement {
-  const el = h("button", { class: on ? "switch on" : "switch", "aria-pressed": on });
+function toggle(on: boolean, onChange: (v: boolean) => void, label?: string): HTMLElement {
+  const el = h("button", { class: on ? "switch on" : "switch", "aria-pressed": String(on) });
+  if (label) el.setAttribute("aria-label", label);
   el.addEventListener("click", () => {
     const next = !el.classList.contains("on");
     el.classList.toggle("on", next);
+    el.setAttribute("aria-pressed", String(next));
     onChange(next);
   });
   return el;
@@ -329,7 +332,7 @@ const MODELS: [string, string][] = [
 
 function apiSection(hasKey: boolean): HTMLElement {
   const dot = statusDot(hasKey);
-  const state = h("span", { class: "hint", text: hasKey ? t("Key saved in the {store}.", { store: KEY_STORE }) : t("No key yet — the chat needs one.") });
+  const state = h("span", { class: "hint", text: hasKey ? t("Key saved in the {store}.", { store: KEY_STORE }) : t("Anthropic API chat requires a key.") });
 
   const field = h("input", {
     type: "password",
@@ -348,7 +351,7 @@ function apiSection(hasKey: boolean): HTMLElement {
     dot.style.background = present ? "#22c55e" : "#f4505e";
     state.textContent = present
       ? t("Key saved in the {store}.", { store: KEY_STORE })
-      : t("No key yet — the chat needs one.");
+      : t("Anthropic API chat requires a key.");
     field.placeholder = present ? `••••••••••••  ${t("(stored)")}` : "sk-ant-...";
     clearBtn.style.display = present ? "" : "none";
   }
@@ -478,6 +481,13 @@ function activePillsSection(connected: Record<string, boolean>): HTMLElement {
     {},
     h("h2", {}, h("span", { text: t("Active pills") })),
     h("div", { class: "hint", text: t("Choose the tools you use. Coucou only shows what you declare here.") }),
+    h("div", { class: "row" },
+      h("span", { text: t("Show optional pills") }),
+      toggle(settings.showPillsArea, (on) => {
+        settings.showPillsArea = on;
+        void save();
+      }, t("Show optional pills")),
+    ),
     slots,
     h("div", { class: "row" }, h("label", { text: t("Main tool") }), main),
     groups,
@@ -485,6 +495,23 @@ function activePillsSection(connected: Record<string, boolean>): HTMLElement {
 }
 
 // ── Chat providers section ────────────────────────────────────────────────────
+
+function subscriptionChatSection(): HTMLElement {
+  const options = ([
+    ["codex_subscription", N_("Codex · ChatGPT subscription")],
+    ["claude_subscription", N_("Claude · Claude subscription")],
+  ] as const).map(([id, label]) => h("button", {
+    class: settings.chatProvider === id ? "primary" : "",
+    text: t(label),
+    "aria-pressed": String(settings.chatProvider === id),
+    onclick: () => { settings.chatProvider = id; void save(); void rerender(); },
+  }));
+  return h("section", {},
+    h("h2", { text: t("Chat with subscriptions") }),
+    h("div", { class: "hint", text: t("Use the sign-ins already active in Codex CLI and Claude Code. For these chats Coucou does not request or read API keys. If access is missing, open the client and sign in with your account.") }),
+    h("div", { class: "row" }, ...options),
+  );
+}
 
 const CHAT_STRINGS = {
   get providersTitle() { return t("Chat providers"); },
@@ -517,8 +544,8 @@ interface CloudDef {
 }
 
 const CLOUD: CloudDef[] = [
-  { id: "google", name: "Google AI", placeholder: "AIza…", where: "aistudio.google.com" },
-  { id: "openai", name: "OpenAI", placeholder: "sk-…", where: "platform.openai.com" },
+  { id: "google", name: N_("Google AI"), placeholder: "AIza…", where: "aistudio.google.com" },
+  { id: "openai", name: N_("OpenAI"), placeholder: "sk-…", where: "platform.openai.com" },
   { id: "openrouter", name: "OpenRouter", placeholder: "sk-or-…", where: "openrouter.ai/keys" },
 ];
 
@@ -575,7 +602,7 @@ function chatProvidersSection(
       h("div", { class: "row" },
         h("label", {},
           h("i", { class: "dot", style: `background:${p.accent};margin-right:8px` }),
-          h("span", { text: def.name }),
+          h("span", { text: t(def.name) }),
         ),
         input, saveBtn, removeBtn, dotEl,
       ),
@@ -876,6 +903,8 @@ function integrationsSection(present: Record<string, boolean>): HTMLElement {
 // ── General section ───────────────────────────────────────────────────────────
 
 function generalSection(): HTMLElement {
+  settings.companion = "morbido";
+  const companion = h("span", { text: "Morbido" });
   const volume = h("input", {
     type: "range", min: "0", max: "0.2", step: "0.005",
     value: String(settings.soundVolume),
@@ -940,6 +969,8 @@ function generalSection(): HTMLElement {
     "section",
     {},
     h("h2", {}, h("span", { text: t("General") })),
+    h("div", { class: "row" }, h("label", { text: t("Companion") }), companion),
+    h("div", { class: "hint", text: t("Morbido changes expression with your activity. Reading glasses appear while working.") }),
     h("div", { class: "row" },
       h("label", { text: t("Sound") }),
       toggle(settings.soundEnabled, (v) => { settings.soundEnabled = v; void save(); }),
@@ -1361,11 +1392,12 @@ async function render() {
   shortcutsListener = null;
   clear(root);
   root.append(
-    h("h1", {}, h("span", { text: "Coucou" }), h("span", { class: "version", text: version })),
+    h("h1", {}, h("span", { text: PRODUCT_LABEL }), h("span", { class: "version", text: version })),
     claudeSection(status),
     agentsSection(agents),
     planSection(status),
     apiSection(hasKey),
+    subscriptionChatSection(),
     chatProvidersSection(chatKeys, keyChanged),
     localSection(customKey),
     activePillsSection(connected),

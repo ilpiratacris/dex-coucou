@@ -29,11 +29,11 @@ test("the list stops at the cap", () => {
   assert.equal(list.length, MAX_ALLOWED);
 });
 
-test("only providers with a key, or a connected server, are offered", () => {
+test("subscriptions, keyed providers and connected servers are offered", () => {
   const none = usableProviders(DEFAULT_SETTINGS, {});
-  assert.deepEqual(none, []);
+  assert.deepEqual(none.map((p) => p.id), ["codex_subscription", "claude_subscription"]);
   const some = usableProviders({ ...DEFAULT_SETTINGS, ollamaUrl: "http://127.0.0.1:11434" }, { anthropic: true, openai: false });
-  assert.deepEqual(some.map((p) => p.id), ["anthropic", "ollama"]);
+  assert.deepEqual(some.map((p) => p.id), ["codex_subscription", "claude_subscription", "anthropic", "ollama"]);
 });
 
 test("the models of one provider are told apart from the others'", () => {

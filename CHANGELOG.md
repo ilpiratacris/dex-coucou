@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- **Goo development sources on main** — consolidated the Windows customization, Morbido renderer and original assets, Italian localization, subscription chat clients, Codex conversation links and expanded face layout. The hidden development launcher and operating guide are versioned with the sources. Code graph regenerated locally; runtime logs and graph caches excluded. This is a development snapshot, with final tests and independent review deferred; no installer or release is produced.
+
+- **Goo: expanded face and centered activities** — the main Windows notch now gives Morbido a full-width face area above the centered session name and scrolling activities, including the idle screen. Eyes, reading glasses and mouth scale with the dedicated face area; hover and drag targets follow its center. Optional integrations stay below. Specialized controls keep their layouts. Development only; visual QA and Claude review remain deferred by the user.
+
+- **Goo development startup on this PC** — the dedicated `GooDevelopment` Windows startup entry launches the hidden checkout launcher. The legacy installed-app entry was removed and the command read back through Windows WMI after direct registry reads disagreed with the startup inventory. The next Windows login remains to be observed.
+
+- **Goo: independent Windows identity** — Goo is the app name chosen by the user; Morbido is its sole companion, including legacy profiles. Original face and greeting motion replace Mochi's character and wardrobe. A new editable SVG app mark and PNG/ICO icons accompany 29 independently synthesized sounds. Windows branding and package metadata use Goo; bundled code notices preserve upstream attribution. Existing settings/hook paths remain compatible. Development only; tests, review and release validation deferred by the user.
+
+- **Windows personal build: Morbido companion** — the sole matte notch face, with no pupils or pink cheeks. Shared rendering covers all 11 agent states and seven reactions, desktop, miniature agents, recap, greeting and file upload. Reading glasses and moving eyes indicate work; other states use small monochrome companions. Mouth strokes are thicker. Development in progress; final QA postponed at the user's request.
+
+- **Windows personal build: subscription chat and centered companion** — the island chat can use signed-in Codex CLI and Claude Code clients through the user's ChatGPT or Claude plan, without API keys. Phone chat can use them after explicit model selection. The companion is centered in the compact island and greeting landing position.
+
 - **Flow dictation** *(macOS, GitHub build)* — hold a key anywhere on the Mac (right ⌥ by default, or right ⌘, right ⌃ or fn), speak, let go: your words are pasted where you type, like Wispr Flow. A small pill rests at the bottom of the screen while Flow dictation is on; when you speak it opens into Mochi and nine dots rising and falling with the graves and the aigus of your voice. Two quick taps keep it listening hands-free until the next tap; Esc cancels. Speech is recognised by the Mac (on-device when it can), and the clipboard gets back what it held after the paste. Off by default — Settings → Voice; it needs the Accessibility permission to see the key and paste
 
 ## Android 0.2.0 — October 13, 2026

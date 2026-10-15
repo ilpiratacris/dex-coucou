@@ -30,6 +30,7 @@ mod settings;
 mod shortcuts;
 mod sounds;
 mod spotify;
+mod subscription_chat;
 mod tray;
 #[cfg(windows)]
 mod webview_drop;
@@ -92,6 +93,7 @@ fn save_settings(app: AppHandle, shared: State<Shared>, settings: Settings) {
         let shortcuts_changed = current.shortcuts != settings.shortcuts;
         // Where Mochi sits on the desktop is desktop.rs's to say, not a webview's.
         let mut settings = settings.clone();
+        settings.companion = "morbido".into();
         settings.desktop_mochi = current.desktop_mochi.clone();
         // Same for the phone link: only its own commands turn it on or off.
         settings.phone_link = current.phone_link;
@@ -266,6 +268,25 @@ fn open_session(session_id: Option<String>, path: Option<String>) -> bool {
         });
         true
     }
+}
+
+/// Codex hook session IDs are desktop thread IDs. Never send arbitrary hook
+/// text to the OS protocol handler, and never fall back to opening a folder.
+fn codex_thread_url(session_id: &str) -> Option<String> {
+    let bytes = session_id.as_bytes();
+    if bytes.len() != 36 || !bytes.iter().enumerate().all(|(i, b)| {
+        if [8, 13, 18, 23].contains(&i) { *b == b'-' } else { b.is_ascii_hexdigit() }
+    }) {
+        return None;
+    }
+    Some(format!("codex://threads/{session_id}"))
+}
+
+#[tauri::command]
+fn open_codex_thread(session_id: Option<String>) -> bool {
+    let Some(url) = session_id.as_deref().and_then(codex_thread_url) else { return false };
+    platform::open_url(&url);
+    true
 }
 
 /// The Claude Desktop pill's target: the Claude app (Windows only — it has no
@@ -691,6 +712,7 @@ pub fn run() {
             open_url,
             open_in_vscode,
             open_session,
+            open_codex_thread,
             open_claude_desktop,
             open_file_in_vscode,
             quit_app,
@@ -831,7 +853,18 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::diff_file;
+    use super::{codex_thread_url, diff_file};
+
+    #[test]
+    fn codex_protocol_only_receives_thread_ids() {
+        assert_eq!(
+            codex_thread_url("019c2e49-2527-76e2-b1ac-913cfbf0e797").as_deref(),
+            Some("codex://threads/019c2e49-2527-76e2-b1ac-913cfbf0e797")
+        );
+        for bad in ["", "../../windows", "019c2e49-2527-76e2-b1ac-913cfbf0e797?x=1", "session"] {
+            assert!(codex_thread_url(bad).is_none());
+        }
+    }
 
     #[test]
     fn only_an_existing_file_by_its_full_path_reaches_the_editor() {

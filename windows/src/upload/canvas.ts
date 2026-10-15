@@ -5,12 +5,13 @@
 // the file being sucked in. The island's own Mochi is hidden for the duration,
 // exactly as on macOS, because this canvas draws its own.
 
+import { drawMorbidoFace } from "../mochi/morbido";
 import { State } from "../core/state";
 import { SCRIPT_FONTS } from "../core/fonts";
 import { N_, isRtl, t } from "../i18n/i18n";
 import {
   USC, eIn, eInOut, eOut, lerp, progressAt,
-  type UploadEyeShape, type UploadFrame,
+  type UploadFrame,
 } from "./sequence";
 
 const FONT = `system-ui, "Segoe UI Variable Text", "Segoe UI", ${SCRIPT_FONTS}, sans-serif`;
@@ -30,24 +31,10 @@ function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   ctx.roundRect(x, y, w, h, rad);
 }
 
-/** Superellipse body — port of usBodyPath(m, R). */
+/** Rounded screen silhouette; slot dimensions stay aligned with the upload controller. */
 function bodyPath(ctx: CanvasRenderingContext2D, m: number, R: number): { rx: number; ry: number } {
-  const mc = Math.max(0, Math.min(m, 1));
-  const n = 2.15 + (5.5 - 2.15) * mc;
-  const rx = R * (1.04 - 0.04 * mc);
-  const ry = R * (0.97 - 0.03 * mc);
-  ctx.beginPath();
-  for (let i = 0; i <= 96; i++) {
-    const a = (i / 96) * Math.PI * 2;
-    const ca = Math.cos(a);
-    const sa = Math.sin(a);
-    const px = rx * Math.sign(ca) * Math.pow(Math.abs(ca), 2 / n);
-    const py = ry * Math.sign(sa) * Math.pow(Math.abs(sa), 2 / n);
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  return { rx, ry };
+  const k = Math.max(0, Math.min(m, 1)); const rx = R * (1.04 - 0.04 * k), ry = R * (0.97 - 0.03 * k);
+  rr(ctx, -rx, -ry, rx * 2, ry * 2, Math.min(rx,ry) * 0.48); return { rx, ry };
 }
 
 function text(
@@ -370,79 +357,21 @@ export class UploadCanvas {
 
     const { rx, ry } = bodyPath(ctx, f.morph, R);
 
-    // Body.
-    const bg = ctx.createLinearGradient(rx * 0.7, -ry * 0.9, -rx * 0.8, ry * 0.9);
-    bg.addColorStop(0, "#EDEDEF");
-    bg.addColorStop(1, "#C4C5CA");
-    ctx.fillStyle = bg;
-    ctx.fill();
-
-    // Edge shadow.
-    const sg = ctx.createRadialGradient(0, 0, R * 0.2, 0, 0, R * 1.3);
-    sg.addColorStop(0, "rgba(0,0,0,0)");
-    sg.addColorStop(0.62, "rgba(0,0,0,0)");
-    sg.addColorStop(1, "rgba(0,0,0,0.12)");
-    ctx.fillStyle = sg;
-    ctx.fill();
-
-    // The body path is reused as a clip for everything drawn inside it.
-    ctx.save();
-    bodyPath(ctx, f.morph, R);
-    ctx.clip();
-
-    // Top rim, once Mochi is box-shaped enough to have one.
-    if (mc > 0.3) {
-      const a = Math.max(0, Math.min(1, (mc - 0.3) / 0.7));
-      ctx.beginPath();
-      ctx.moveTo(-rx * 0.72, -ry + 0.9);
-      ctx.lineTo(rx * 0.72, -ry + 0.9);
-      ctx.strokeStyle = `rgba(255,255,255,${0.6 * a})`;
-      ctx.lineWidth = 1.2;
-      ctx.lineCap = "round";
-      ctx.stroke();
-    }
-
-    // Mouth hole.
-    const mh = f.mouth * R * mc;
-    if (mh > 0.3) {
-      const mw = 2 * rx - 0.24 * R;
-      const mx = -mw / 2;
-      const my = -ry + 0.1 * R;
-      const g = ctx.createLinearGradient(0, my, 0, my + mh);
-      g.addColorStop(0, "#030304");
-      g.addColorStop(1, "#101114");
-      ctx.fillStyle = g;
-      rr(ctx, mx, my, mw, mh, Math.min(mw / 2, mh / 2));
-      ctx.fill();
-      if (mh > 4) {
-        const r = Math.min(mw / 2, mh / 2);
-        ctx.beginPath();
-        ctx.moveTo(mx + r, my + mh + 0.5);
-        ctx.lineTo(mx + mw - r, my + mh + 0.5);
-        ctx.strokeStyle = "rgba(255,255,255,0.55)";
-        ctx.lineWidth = 1;
-        ctx.lineCap = "round";
-        ctx.stroke();
+      // Same envelope and slot as UploadSeq.mouthRect: file suction stays aligned.
+      const g = ctx.createLinearGradient(0, -ry, 0, ry);
+      g.addColorStop(0, "#252b27"); g.addColorStop(1, "#191e1b");
+      ctx.fillStyle = g; ctx.fill();
+      const mh = f.mouth * R * mc;
+      if (mh > 0.3) {
+        ctx.fillStyle = "#cddfd3";
+        rr(ctx, -rx + 0.12 * R, -ry + 0.1 * R, 2 * rx - 0.24 * R, mh, mh / 2); ctx.fill();
       }
-    }
-
-    // Eyes.
-    const ew = R * 0.25;
-    const eh = R * (0.62 - 0.16 * mc);
-    const ey = R * (0.02 + 0.28 * mc);
-    const sp = R * 0.3;
-    const lx = f.lookX * R * (0.34 - 0.08 * mc);
-    const ly = f.lookY * R * (0.16 - 0.09 * mc);
-    for (const sd of [-1, 1]) {
-      ctx.save();
-      ctx.translate(sd * sp + lx, ey + ly);
-      drawEye(ctx, f.eye, ew, eh);
-      ctx.restore();
-    }
-
-    ctx.restore(); // body clip
-    ctx.restore(); // transform
+      ctx.translate(0, mc * R * 0.18);
+      drawMorbidoFace(ctx, rx * 1.8, ry * 1.5, { eye: f.eye === "content" ? "happy" : f.eye,
+        lookX: f.lookX, lookY: f.lookY, eyesOnly: f.d <= 24 || mc > 0.5 });
+    ctx.restore();
   }
+
 
   // ── The file, and the suction ─────────────────────────────────────────────
 
@@ -518,85 +447,11 @@ export class UploadCanvas {
   }
 }
 
-// ── Eye shapes ──────────────────────────────────────────────────────────────
-
-const INK = "#0E0F12";
-
-function drawEye(ctx: CanvasRenderingContext2D, shape: UploadEyeShape, w: number, h: number) {
-  switch (shape) {
-    case "pill":
-      ctx.fillStyle = INK;
-      rr(ctx, -w / 2, -h / 2, w, h, w / 2);
-      ctx.fill();
-      break;
-
-    case "cup": {
-      // Flat top, semicircular bottom.
-      const hh = h * 0.55;
-      ctx.beginPath();
-      ctx.moveTo(-w / 2, -hh / 2);
-      ctx.lineTo(w / 2, -hh / 2);
-      ctx.lineTo(w / 2, hh / 2 - w / 2);
-      ctx.arc(0, hh / 2 - w / 2, w / 2, 0, Math.PI, false);
-      ctx.closePath();
-      ctx.fillStyle = INK;
-      ctx.fill();
-      break;
-    }
-
-    case "content":
-      ctx.beginPath();
-      ctx.arc(0, -h * 0.12, w * 0.85, Math.PI * 0.15, Math.PI * 0.85, false);
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = w * 0.5;
-      ctx.lineCap = "round";
-      ctx.stroke();
-      break;
-  }
-}
-
-// ── Document icon ───────────────────────────────────────────────────────────
-
-/**
- * The generic sheet with a folded corner. macOS swaps in the real file icon from
- * NSWorkspace; Windows has no equivalent reachable from the webview, so this is
- * the shape in every case — it is the same fallback the Swift draws.
- */
+/** Original neutral file tile, separate from the companion artwork. */
 function drawDoc(ctx: CanvasRenderingContext2D, cx: number, cy: number, wsc: number, hsc: number) {
-  const w = 34 * wsc;
-  const h = 42 * hsc;
-  const x = cx - w / 2;
-  const y = cy - h / 2;
-  const fold = 8 * Math.min(wsc, hsc);
-
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.45)";
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetY = 3;
-  ctx.beginPath();
-  ctx.moveTo(x + 2, y);
-  ctx.lineTo(x + w - fold, y);
-  ctx.lineTo(x + w, y + fold);
-  ctx.lineTo(x + w, y + h - 2);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - 2, y + h);
-  ctx.lineTo(x + 2, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - 2);
-  ctx.lineTo(x, y + 2);
-  ctx.quadraticCurveTo(x, y, x + 2, y);
-  ctx.closePath();
-  ctx.fillStyle = "#F4F4F6";
-  ctx.fill();
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(wsc, hsc);
+  ctx.fillStyle = "#cddfd3"; rr(ctx, -17, -21, 34, 42, 5); ctx.fill();
+  ctx.strokeStyle = "#59685f"; ctx.lineWidth = 2; ctx.lineCap = "round";
+  for (const y of [-8, 0, 8]) { ctx.beginPath(); ctx.moveTo(-8,y); ctx.lineTo(y===8?3:8,y); ctx.stroke(); }
   ctx.restore();
-
-  ctx.beginPath();
-  ctx.moveTo(x + w - fold, y);
-  ctx.lineTo(x + w - fold, y + fold);
-  ctx.lineTo(x + w, y + fold);
-  ctx.closePath();
-  ctx.fillStyle = "#D5D6DB";
-  ctx.fill();
-
-  ctx.fillStyle = "#3B82F5";
-  rr(ctx, x + w * 0.18, y + h * 0.58, w * 0.64, h * 0.16, 2);
-  ctx.fill();
 }

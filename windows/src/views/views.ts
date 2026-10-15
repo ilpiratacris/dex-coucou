@@ -290,6 +290,7 @@ function buildOverview(actions: ViewActions): ViewHost {
     },
     sync() {
       const task = State.focusTask;
+      el.classList.toggle("pills-area-hidden", !State.settings.showPillsArea);
       if (task?.id !== lastFocus) {
         lastFocus = task?.id ?? null;
         detailOpen = false;
@@ -380,6 +381,7 @@ function buildOverview(actions: ViewActions): ViewHost {
         }
       }
 
+      el.classList.toggle("face-stage", mode === "ticker");
       jump.style.display = detailOpen || mode === "plan" || mode === "diff" ? "none" : "";
 
       // Ctrl+↓ Ctrl+↑ walk the open GitHub list (cardItemCount / cardSelection).
@@ -471,17 +473,16 @@ function lighten(hex: string, amount: number): string {
 function buildEmpty(actions: ViewActions): ViewHost {
   const body = h(
     "div",
-    { class: "stack", style: "padding:0 18px 0 118px;flex-direction:row;align-items:center;gap:16px" },
+    { class: "stack empty-body" },
     h(
       "div",
       { style: "display:flex;flex-direction:column;gap:5px" },
       h("div", { class: "title", text: tl("Nothing running right now.") }),
       h("div", { class: "sub", text: tl("Drop a file or window, or ask me anything.") }),
     ),
-    h("div", { class: "grow" }),
     btn(tl("Ask Claude"), "primary", () => actions.setView("prompt")),
   );
-  return { el: h("div", { class: "view" }, card(null, body)), sync() {} };
+  return { el: h("div", { class: "view face-stage empty-face" }, card(null, body)), sync() {} };
 }
 
 // ── Approval ──────────────────────────────────────────────────────────────────
@@ -691,7 +692,8 @@ function buildFinished(actions: ViewActions): ViewHost {
       const task = State.focusTask;
       title.textContent = task?.finalLine || (task && lastTextStep(task.steps)) || t("Session finished");
       // Sessions from the Claude desktop app live there, not in a terminal.
-      const label = task?.id === "agent_claude-desktop" ? t("Open Claude") : t("Open terminal");
+      const label = task?.id === "agent_claude-desktop" ? t("Open Claude")
+        : task?.id === "agent_codex" ? t("Open Codex") : t("Open terminal");
       const span = open.firstElementChild as HTMLElement;
       if (span.textContent !== label) span.textContent = label;
     },

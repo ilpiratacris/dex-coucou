@@ -400,7 +400,7 @@ function chatBlock(makeToggle: Toggle, settings: Settings): HTMLElement {
   const providerRow = (p: ProviderDef): HTMLElement => {
     const list = h("div", {});
     const button = h("button", { text: t("Choose models") });
-    const head = h("div", { class: "row" }, h("label", { text: p.name }), button);
+    const head = h("div", { class: "row" }, h("label", { text: t(p.name) }), button);
     const show = (models: string[]) => {
       list.replaceChildren(
         ...[...new Set([...models, ...modelsOf(allowed, p.id)])].map((model) => {
@@ -430,7 +430,7 @@ function chatBlock(makeToggle: Toggle, settings: Settings): HTMLElement {
     for (const p of usableProvidersCandidates()) hasKey[p.id] = (await Bridge.secretPresent(p.key!)) ?? false;
     const providers = usableProviders(settings, hasKey);
     body.append(h("div", { class: "hint", text: t("Models the phone may use") }));
-    if (providers.length === 0) body.append(h("div", { class: "hint", text: t("No provider is ready: add an API key or connect a local model first.") }));
+    if (providers.length === 0) body.append(h("div", { class: "hint", text: t("No provider is ready: sign in to Codex or Claude, add an API key, or connect a local model first.") }));
     for (const p of providers) body.append(providerRow(p));
     emptyNote.hidden = allowed.length > 0;
     body.append(emptyNote);
@@ -461,7 +461,7 @@ function chatBlock(makeToggle: Toggle, settings: Settings): HTMLElement {
     "div",
     {},
     h("div", { class: "row" }, h("label", { text: t("Let the phone chat with my AI providers") }), switchEl),
-    h("div", { class: "hint", text: t("Chat uses the API keys saved on this computer. The phone never sees them, and each message may cost money.") }),
+    h("div", { class: "hint", text: t("Chat uses the providers you allow below. Subscription clients use your signed-in plan; API providers may cost money. The phone never sees credentials.") }),
     note,
     body,
   );

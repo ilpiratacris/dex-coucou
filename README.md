@@ -1,3 +1,19 @@
+# Goo — sviluppo Windows
+
+Goo è il fork personale di Cristiano Costa, con **Morbido** come unico companion, icona e suoni originali. Sviluppo locale: controlli finali e release ancora da completare.
+
+- [Versione Windows](windows/README.md)
+- [Avvio e sincronizzazione dello sviluppo](DEVELOPMENT.md)
+- [Identità e separazione degli asset](design/IDENTITA-FORK.md)
+- [Morbido: stati e rappresentazioni](design/MORBIDO.md)
+- [Attribuzioni del codice](THIRD_PARTY_NOTICES.md)
+
+La documentazione upstream conservata qui sotto riguarda il progetto originale. I suoi media e gli asset riservati macOS/Android restano esclusi dalla distribuzione Windows Goo.
+
+---
+
+## Documentazione storica upstream
+
 <div align="center">
 
 <img src="NotchBuddy/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" width="96" alt="Coucou icon">

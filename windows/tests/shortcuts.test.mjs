@@ -424,6 +424,16 @@ test("the terminal shortcut is the existing Open terminal (the session's window)
   State.setFocus("agent_claude-desktop");
   runGlobalShortcut(host, "jumpToTerminal", resume);
   assert.equal(sent("open_claude_desktop").length, 1);
+
+  // A Codex session opens its desktop conversation, never its folder.
+  did = [];
+  State.upsertExternalAgent("agent_codex", "Codex", "#2DD4BF");
+  State.setFocus("agent_codex");
+  State.focusTask.sessionId = "019c2e49-2527-76e2-b1ac-913cfbf0e797";
+  const folderOpensBefore = sent("open_session").length;
+  runGlobalShortcut(host, "jumpToTerminal", resume);
+  assert.deepEqual(sent("open_codex_thread"), [{ sessionId: "019c2e49-2527-76e2-b1ac-913cfbf0e797" }]);
+  assert.equal(sent("open_session").length, folderOpensBefore);
 });
 
 test("next and previous pill wrap around and open the overview", () => {

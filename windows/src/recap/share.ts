@@ -2,6 +2,7 @@
 // port of RecapShareImageView in WeeklyRecapView.swift. Same colours, sizes
 // and order; Mochi comes from the island's own engine.
 
+import { PRODUCT_LABEL } from "../core/brand";
 import { BotEngine } from "../mochi/engine";
 import { formatCount, formatDuration, weekRangeLabel, type WeeklySummary } from "./summary";
 import { t } from "../i18n/i18n";
@@ -30,7 +31,7 @@ const T = {
   get longestSession() { return t("Longest session"); },
   get approved() { return t("Approved"); },
   get denied() { return t("Denied"); },
-  footer: "Coucou · github.com/Louis-CFM/coucou",
+  footer: `${PRODUCT_LABEL} · Morbido`,
 };
 
 /**
@@ -191,7 +192,7 @@ export function renderShareImage(s: WeeklySummary, hideProjects: boolean): HTMLC
   x.fillStyle = INK;
   x.textAlign = "center";
   font(x, 900, 52);
-  x.fillText("Coucou", cx, y);
+  x.fillText(PRODUCT_LABEL, cx, y);
   y += 62 + 6;
 
   x.fillStyle = DIM;
